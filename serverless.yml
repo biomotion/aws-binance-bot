@@ -1,0 +1,17 @@
+service: aws-binance-bot
+provider:
+  name: aws
+  stage: dev
+  region: ap-northeast-1
+  runtime: python3.9
+
+functions:
+  binance_bot:
+    handler: handler.binance_signal
+    events:
+      - http:
+          path: /webhook
+          method: POST
+
+plugins:
+  - serverless-python-requirements
