@@ -1,2 +1,6 @@
 python-binance
 cryptography
+ccxt
+requests
+discord.py
+boto3

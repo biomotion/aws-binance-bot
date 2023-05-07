@@ -9,14 +9,29 @@ functions:
   trade_bot:
     handler: trade_bot.handler
     events:
-      - http:
-          path: /webhook
-          method: POST
+      - eventBridge:
+          pattern:
+            source:
+              - "discord_bot"
+            detail-type:
+              - "DiscordBotRequest"
       - schedule:
           rate: rate(15 minutes)
           input:
             source: "polling"
             detail-type: "PollingRequest"
+  discord_bot:
+    handler: discord_bot.handler
+    events:
+      - eventBridge:
+          pattern:
+            source:
+              - "trade_bot"
+            detail-type:
+              - "TradeBotRequest"
+      - http:
+          path: /webhook
+          method: POST
 
 plugins:
   - serverless-python-requirements

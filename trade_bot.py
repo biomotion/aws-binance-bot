@@ -31,7 +31,7 @@ def get_indicator():
     if sma5 > sma60 and psma5 > psma60:
         return 'hold long'
 
-def handle_eventbridge_event(event):
+def handle_polling_event(event):
     # Handle requests from EventBridge
     ret = get_indicator()
     return {
@@ -39,12 +39,20 @@ def handle_eventbridge_event(event):
         'body': json.dumps('btc-trading-signal: ' + ret)
     }
 
-def handle_api_gateway_event(event):
+def handle_discord_bot_event(event):
     # Handle requests from discord_bot
-    pass
+    return {
+        'statusCode': 200,
+        'body': json.dumps('btc-trading-signal: ' + ret)
+    }
 
 def binance_trade(event, context):
-    if "source" in event and event["source"] == "polling":  # EventBridge event
-        handle_eventbridge_event(event)
-    elif "httpMethod" in event:  # API Gateway event
-        handle_api_gateway_event(event)
+    if 'source' not in event:
+        return {
+            'statusCode': 400,
+            'body': 'Invalid request'
+        }
+    if event["source"] == "polling":  # EventBridge event
+        return handle_polling_event(event)
+    elif event["source"] == "discord_bot":  # API Gateway event
+        return handle_discord_bot_event(event)
