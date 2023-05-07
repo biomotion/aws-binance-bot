@@ -6,8 +6,8 @@ provider:
   runtime: python3.9
 
 functions:
-  binance_bot:
-    handler: handler.binance_trade
+  trade_bot:
+    handler: trade_bot.handler
     events:
       - http:
           path: /webhook
