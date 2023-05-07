@@ -1,9 +1,9 @@
 import json
 from binance.client import Client
 
-def binance_signal(event, context):
+client = Client()
     
-    client = Client()
+def get_indicator():
     
     klines = client.get_historical_klines("BTCUSDT", Client.KLINE_INTERVAL_4HOUR, "two week ago")
     
@@ -19,22 +19,32 @@ def binance_signal(event, context):
     psma60 = prev_sma(65)
     psma5 = prev_sma(5)
     
-    ret = ''
-    
     if sma5 > sma60 and psma5 < psma60:
-        ret = 'flip to long'
+        return 'flip to long'
         
     if sma5 < sma60 and psma5 > psma60:
-        ret = 'flip to short'
+        return 'flip to short'
         
     if sma5 < sma60 and psma5 < psma60:
-        ret = 'hold short'
+        return 'hold short'
     
     if sma5 > sma60 and psma5 > psma60:
-        ret = 'hold long'
+        return 'hold long'
 
-    # TODO implement
+def handle_eventbridge_event(event):
+    # Handle requests from EventBridge
+    ret = get_indicator()
     return {
         'statusCode': 200,
         'body': json.dumps('btc-trading-signal: ' + ret)
     }
+
+def handle_api_gateway_event(event):
+    # Handle requests from discord_bot
+    pass
+
+def binance_trade(event, context):
+    if "source" in event and event["source"] == "polling":  # EventBridge event
+        handle_eventbridge_event(event)
+    elif "httpMethod" in event:  # API Gateway event
+        handle_api_gateway_event(event)

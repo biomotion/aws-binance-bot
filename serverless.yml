@@ -7,11 +7,16 @@ provider:
 
 functions:
   binance_bot:
-    handler: handler.binance_signal
+    handler: handler.binance_trade
     events:
       - http:
           path: /webhook
           method: POST
+      - schedule:
+          rate: rate(15 minutes)
+          input:
+            source: "polling"
+            detail-type: "PollingRequest"
 
 plugins:
   - serverless-python-requirements
