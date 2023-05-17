@@ -1,5 +1,6 @@
 import json
 from binance.client import Client
+import boto3
 
 client = Client()
     
@@ -34,25 +35,35 @@ def get_indicator():
 def handle_polling_event(event):
     # Handle requests from EventBridge
     ret = get_indicator()
-    return {
-        'statusCode': 200,
-        'body': json.dumps('btc-trading-signal: ' + ret)
+    event_bridge = boto3.client('events')
+    event_detail = {
+        'message': ret
     }
+    print(event_detail)
+    response = event_bridge.put_events(
+        Entries=[
+            {
+                'Source': 'trade_bot',
+                'DetailType': 'TradeBotRequest',
+                'Detail': json.dumps(event_detail),
+            }
+        ]
+    )
 
-def handle_discord_bot_event(event):
-    # Handle requests from discord_bot
-    return {
-        'statusCode': 200,
-        'body': json.dumps('btc-trading-signal: ' + ret)
-    }
+    if response['FailedEntryCount'] > 0:
+        raise Exception('Failed to send message to EventBridge')
+    else:
+        return {
+            'statusCode': 200,
+            'body': json.dumps('Message sent to EventBridge')
+        }
 
-def binance_trade(event, context):
-    if 'source' not in event:
+def handler(event, context):
+    if 'source' in event and event["source"] == "polling":  # EventBridge event
+        print("polling event")
+        return handle_polling_event(event)
+    else:
         return {
             'statusCode': 400,
             'body': 'Invalid request'
         }
-    if event["source"] == "polling":  # EventBridge event
-        return handle_polling_event(event)
-    elif event["source"] == "discord_bot":  # API Gateway event
-        return handle_discord_bot_event(event)
